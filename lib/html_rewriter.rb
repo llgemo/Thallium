@@ -106,15 +106,19 @@ module HtmlRewriter
   # ── <meta http-equiv="refresh"> ───────────────────────────────────────────
 
   def self.rewrite_meta_refresh(doc, base_uri)
-    doc.css('meta[http-equiv="refresh" i]').each do |node|
+  doc.css('meta[http-equiv="refresh" i]').each do |node|
+    begin
       content = node['content'].to_s
       if content =~ /url=(.+)/i
         url = $1.strip.gsub(/['"]/, '')
         abs = resolve(url, base_uri)
         node['content'] = content.sub(/url=.+/i, "url=#{proxify(abs)}") if abs
       end
+    rescue => e
+      # skip malformed meta refresh tags
     end
   end
+end
 
   # ── Remove any <base> tags so our rewrites take effect ────────────────────
 
