@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require 'sinatra'
+require 'sinatra/json'
 require 'net/http'
 require 'net/https'
 require 'uri'
@@ -28,11 +29,8 @@ configure do
   logger.level = Logger::INFO
   set :logger, logger
 
-  # CORS and security headers
   set :protection, except: [:frame_options, :json_csrf]
 end
-
-# ─── Middleware ───────────────────────────────────────────────────────────────
 
 before do
   headers(
@@ -52,15 +50,11 @@ error do |e|
   JSON.generate({ error: 'Internal proxy error', message: e.message })
 end
 
-# ─── Health Check ─────────────────────────────────────────────────────────────
-
 get '/health' do
-  json status: 'ok', version: '1.0.0', name: 'Thallium'
+  content_type :json
+  JSON.generate({ status: 'ok', version: '1.0.0', name: 'Thallium' })
 end
 
-# ─── API: Proxy a URL ─────────────────────────────────────────────────────────
-
-# POST /api/proxy  { url: "https://example.com", options: {} }
 post '/api/proxy' do
   body_data = request.body.read
   params_in = JSON.parse(body_data) rescue {}
@@ -69,12 +63,13 @@ post '/api/proxy' do
   options    = params_in['options'] || {}
 
   unless UrlValidator.valid?(target_url)
+    content_type :json
     halt 400, JSON.generate({ error: 'Invalid or blocked URL' })
   end
 
-  # Rate limiting by IP
   client_ip = request.ip
   unless RateLimiter.allow?(client_ip)
+    content_type :json
     halt 429, JSON.generate({ error: 'Rate limit exceeded. Please wait a moment.' })
   end
 
@@ -84,21 +79,22 @@ post '/api/proxy' do
   begin
     result = handler.fetch
     response.set_cookie('thallium_session', value: session_id, path: '/', http_only: true)
-
     content_type result[:content_type] || 'text/html'
     status result[:status] || 200
     result[:body]
   rescue RequestHandler::BlockedError => e
+    content_type :json
     halt 403, JSON.generate({ error: e.message })
   rescue RequestHandler::TimeoutError
+    content_type :json
     halt 504, JSON.generate({ error: 'Target server timed out' })
   rescue => e
     settings.logger.error "Proxy fetch error: #{e.message}"
+    content_type :json
     halt 502, JSON.generate({ error: "Could not reach target: #{e.message}" })
   end
 end
 
-# GET /proxy?url=https://example.com  (direct passthrough for assets)
 get '/proxy' do
   target_url = params['url'].to_s.strip
 
@@ -125,30 +121,32 @@ get '/proxy' do
   end
 end
 
-# ─── API: URL Info ────────────────────────────────────────────────────────────
-
 get '/api/info' do
   target_url = params['url'].to_s.strip
   unless UrlValidator.valid?(target_url)
+    content_type :json
     halt 400, JSON.generate({ error: 'Invalid URL' })
   end
 
-  uri = URI.parse(target_url)
-  json(
-    host:     uri.host,
-    scheme:   uri.scheme,
-    path:     uri.path,
-    port:     uri.port,
-    proxied:  "/proxy?url=#{URI.encode_www_form_component(target_url)}"
-  )
-rescue URI::InvalidURIError
-  halt 400, JSON.generate({ error: 'Malformed URL' })
+  begin
+    uri = URI.parse(target_url)
+    content_type :json
+    JSON.generate(
+      host:    uri.host,
+      scheme:  uri.scheme,
+      path:    uri.path,
+      port:    uri.port,
+      proxied: "/proxy?url=#{URI.encode_www_form_component(target_url)}"
+    )
+  rescue URI::InvalidURIError
+    content_type :json
+    halt 400, JSON.generate({ error: 'Malformed URL' })
+  end
 end
 
-# ─── API: Stats ───────────────────────────────────────────────────────────────
-
 get '/api/stats' do
-  json(
+  content_type :json
+  JSON.generate(
     requests_served: RateLimiter.total_requests,
     active_sessions: SessionManager.active_count,
     uptime_seconds:  (Time.now - START_TIME).to_i
