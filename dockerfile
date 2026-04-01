@@ -1,6 +1,6 @@
 FROM ruby:3.3-alpine
 
-RUN apk add --no-cache build-base libxml2-dev libxslt-dev
+RUN apk add --no-cache build-base libxml2-dev libxslt-dev ca-certificates
 
 WORKDIR /app
 
