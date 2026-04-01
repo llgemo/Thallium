@@ -106,7 +106,7 @@ module HtmlRewriter
   # ── <meta http-equiv="refresh"> ───────────────────────────────────────────
 
   def self.rewrite_meta_refresh(doc, base_uri)
-  doc.css('meta[http-equiv="refresh" i]').each do |node|
+  doc.css('meta').select { |n| n['http-equiv']&.downcase == 'refresh' }.each do |node|
     begin
       content = node['content'].to_s
       if content =~ /url=(.+)/i
