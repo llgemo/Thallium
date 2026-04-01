@@ -1,0 +1,10 @@
+# Bundler
+.bundle/
+vendor/bundle/
+
+# Logs & temp
+*.log
+tmp/
+
+# Environment secrets
+.env
