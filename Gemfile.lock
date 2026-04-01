@@ -1,0 +1,40 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    base64 (0.3.0)
+    mustermann (3.0.4)
+      ruby2_keywords (~> 0.0.1)
+    nio4r (2.7.5)
+    nokogiri (1.19.2-x64-mingw-ucrt)
+      racc (~> 1.4)
+    puma (6.6.1)
+      nio4r (~> 2.0)
+    racc (1.8.1)
+    rack (2.2.22)
+    rack-cors (2.0.2)
+      rack (>= 2.0.0)
+    rack-protection (3.2.0)
+      base64 (>= 0.1.0)
+      rack (~> 2.2, >= 2.2.4)
+    ruby2_keywords (0.0.5)
+    sinatra (3.2.0)
+      mustermann (~> 3.0)
+      rack (~> 2.2, >= 2.2.4)
+      rack-protection (= 3.2.0)
+      tilt (~> 2.0)
+    tilt (2.7.0)
+
+PLATFORMS
+  x64-mingw-ucrt
+
+DEPENDENCIES
+  nokogiri (~> 1.16)
+  puma (~> 6.4)
+  rack-cors (~> 2.0)
+  sinatra (~> 3.2)
+
+RUBY VERSION
+   ruby 3.4.8p72
+
+BUNDLED WITH
+   2.6.9
