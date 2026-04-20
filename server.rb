@@ -50,6 +50,10 @@ error do |e|
   JSON.generate({ error: 'Internal proxy error', message: e.message })
 end
 
+get '/' do
+  send_file File.join(settings.public_folder, 'index.html')
+end
+
 get '/health' do
   content_type :json
   JSON.generate({ status: 'ok', version: '1.0.0', name: 'Thallium' })
