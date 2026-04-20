@@ -8,8 +8,8 @@ require 'monitor'
 module RateLimiter
   extend self
 
-  CAPACITY    = 30   # max burst
-  REFILL_RATE = 5    # tokens added per second
+  CAPACITY    = 200   # max burst
+  REFILL_RATE = 50    # tokens added per second
   CLEANUP_EVERY = 500 # requests between GC sweeps
 
   @buckets  = {}
