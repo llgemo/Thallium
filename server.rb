@@ -23,6 +23,7 @@ configure do
   set :bind, '0.0.0.0'
   set :logging, true
   set :show_exceptions, false
+  set :public_folder, File.dirname(__FILE__) + '/public'
 
   logger = Logger.new($stdout)
   logger.level = Logger::INFO
