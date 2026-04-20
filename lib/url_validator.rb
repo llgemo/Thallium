@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-
+require 'timeout'
 require 'uri'
 require 'resolv'
 require 'ipaddr'
@@ -56,28 +56,26 @@ module UrlValidator
 
   private
 
-  def private_host?(host)
-    # Check raw IP
+def private_host?(host)
     begin
       addr = IPAddr.new(host)
       return private_ip?(addr)
     rescue IPAddr::InvalidAddressError
-      # not a bare IP; fall through to DNS
     end
 
-    # Resolve hostname and check each returned IP
-    ips = Resolv.getaddresses(host)
-    return true if ips.empty? # unresolvable — block it
-
-    ips.any? do |ip_str|
-      begin
-        private_ip?(IPAddr.new(ip_str))
-      rescue IPAddr::InvalidAddressError
-        false
+    begin
+      ips = Timeout.timeout(3) { Resolv.getaddresses(host) }
+      return false if ips.empty?
+      ips.any? do |ip_str|
+        begin
+          private_ip?(IPAddr.new(ip_str))
+        rescue IPAddr::InvalidAddressError
+          false
+        end
       end
+    rescue
+      false
     end
-  rescue Resolv::ResolvError
-    true # can't resolve — block
   end
 
   def private_ip?(addr)
